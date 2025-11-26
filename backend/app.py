@@ -9,8 +9,6 @@ import os
 
 app = Flask(__name__)
 
-
-import os
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(app.root_path, "servicefix.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
@@ -116,23 +114,27 @@ def login():
 
 @app.route('/api/orders', methods=['POST'])
 def create_order():
-    data = request.get_json()
-    
-    if not data or not data.get('client_name') or not data.get('phone') or not data.get('description'):
-        return jsonify({'message': 'Missing required fields'}), 400
-    
-    new_order = Order(
-        client_name=data['client_name'],
-        phone=data['phone'],
-        description=data['description'],
-        status='new'
-    )
-    db.session.add(new_order)
-    db.session.commit()
-    return jsonify({
-        'message': 'Order created successfully',
-        'order': new_order.to_dict()
-    }), 201
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('client_name') or not data.get('phone') or not data.get('description'):
+            return jsonify({'message': 'Missing required fields'}), 400
+        
+        new_order = Order(
+            client_name=data['client_name'],
+            phone=data['phone'],
+            description=data['description'],
+            status='new'
+        )
+        db.session.add(new_order)
+        db.session.commit()
+        return jsonify({
+            'message': 'Order created successfully',
+            'order': new_order.to_dict()
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error creating order: {str(e)}'}), 500
 
 @app.route('/api/orders', methods=['GET'])
 def get_orders():
@@ -142,57 +144,69 @@ def get_orders():
 @app.route('/api/orders/<int:order_id>/accept', methods=['POST'])
 @token_required
 def accept_order(current_user, order_id):
-    order = db.session.get(Order, order_id)
+    try:
+        order = db.session.get(Order, order_id)
 
-    if not order:
-        return jsonify({'message': 'Order not found'}), 404
+        if not order:
+            return jsonify({'message': 'Order not found'}), 404
 
-    if order.status == 'accepted':
-        return jsonify({'message': 'Order already accepted'}), 400
+        if order.status == 'accepted':
+            return jsonify({'message': 'Order already accepted'}), 400
 
-    order.status = 'accepted'
-    order.accepted_at = datetime.utcnow()
-    db.session.commit()
+        order.status = 'accepted'
+        order.accepted_at = datetime.utcnow()
+        db.session.commit()
 
-    return jsonify({
-        'message': 'Order accepted successfully',
-        'order': order.to_dict()
-    }), 200
+        return jsonify({
+            'message': 'Order accepted successfully',
+            'order': order.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error accepting order: {str(e)}'}), 500
 
 @app.route('/api/orders/<int:order_id>/work-status', methods=['PUT'])
 @token_required
 def update_work_status(current_user, order_id):
-    order = db.session.get(Order, order_id)
-    
-    if not order:
-        return jsonify({'message': 'Order not found'}), 404
-    
-    data = request.get_json()
-    new_status = data.get('work_status')
-    
-    if new_status not in ['not_done', 'in_progress', 'done']:
-        return jsonify({'message': 'Invalid status'}), 400
-    
-    order.work_status = new_status
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Work status updated',
-        'order': order.to_dict()
-    }), 200
+    try:
+        order = db.session.get(Order, order_id)
+        
+        if not order:
+            return jsonify({'message': 'Order not found'}), 404
+        
+        data = request.get_json()
+        new_status = data.get('work_status')
+        
+        if new_status not in ['not_done', 'in_progress', 'done']:
+            return jsonify({'message': 'Invalid status'}), 400
+        
+        order.work_status = new_status
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Work status updated',
+            'order': order.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error updating status: {str(e)}'}), 500
 
 @app.route('/api/orders/<int:order_id>', methods=['DELETE'])
 @token_required
 def delete_order(current_user, order_id):
-    order = db.session.get(Order, order_id)
+    try:
+        order = db.session.get(Order, order_id)
 
-    if not order:
-        return jsonify({'message': 'Order not found'}), 404
+        if not order:
+            return jsonify({'message': 'Order not found'}), 404
 
-    db.session.delete(order)
-    db.session.commit()
+        db.session.delete(order)
+        db.session.commit()
 
-    return jsonify({'message': 'Order deleted successfully'}), 200
+        return jsonify({'message': 'Order deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error deleting order: {str(e)}'}), 500
 
 @app.route('/api/verify-token', methods=['GET'])
 @token_required
@@ -227,4 +241,4 @@ def init_db():
 if __name__ == '__main__':
     with app.app_context():
         init_db()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
