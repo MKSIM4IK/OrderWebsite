@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axiosInstance from '../api/axiosConfig';
 import '../styles/LoginPage.css';
 import { useTranslation } from '../i18n';
 import { usePageTitle } from '../usePageTitle';
@@ -34,10 +34,11 @@ function LoginPage({ setIsAuthenticated }) {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/login', credentials);
+      const response = await axiosInstance.post('/api/login', credentials);
 
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', response.data.username);
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
       toast.success(`${t('login.welcome')}, ${response.data.username}!`);
       setIsAuthenticated(true);

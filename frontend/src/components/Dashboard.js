@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axiosInstance from '../api/axiosConfig';
 import '../styles/Dashboard.css';
 import { useTranslation } from '../i18n';
 import { usePageTitle } from '../usePageTitle';
@@ -18,7 +18,7 @@ function Dashboard() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/orders');
+      const response = await axiosInstance.get('/api/orders');
       setOrders(response.data);
       setLoading(false);
     } catch (error) {
@@ -34,18 +34,11 @@ function Dashboard() {
   }, [fetchOrders]);
 
   const acceptOrder = async (orderId) => {
-    const token = localStorage.getItem('token');
-    
     setAcceptingOrderId(orderId);
     try {
-      await axios.post(
-        `http://localhost:5000/api/orders/${orderId}/accept`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+      await axiosInstance.post(
+        `/api/orders/${orderId}/accept`,
+        {}
       );
 
       toast.success(`${t('dashboard.accepted_badge')} #${orderId}`);
@@ -59,18 +52,11 @@ function Dashboard() {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
-    const token = localStorage.getItem('token');
-    
     setUpdatingStatusId(orderId);
     try {
-      await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/work-status`,
-        { work_status: newStatus },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+      await axiosInstance.put(
+        `/api/orders/${orderId}/work-status`,
+        { work_status: newStatus }
       );
 
       toast.success(t(`dashboard.${newStatus}`));
@@ -90,17 +76,10 @@ function Dashboard() {
   };
 
   const deleteOrder = async (orderId) => {
-    const token = localStorage.getItem('token');
-    
     setDeletingOrderId(orderId);
     try {
-      await axios.delete(
-        `http://localhost:5000/api/orders/${orderId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+      await axiosInstance.delete(
+        `/api/orders/${orderId}`
       );
 
       toast.success('Order deleted');

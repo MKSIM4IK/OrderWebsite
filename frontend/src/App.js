@@ -8,6 +8,7 @@ import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import Navigation from './components/Navigation';
 import ProtectedRoute from './components/ProtectedRoute';
+import axiosInstance from './api/axiosConfig';
 import './App.css';
 import { useTranslation } from './i18n';
 
@@ -29,6 +30,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    delete axiosInstance.defaults.headers.common['Authorization'];
     setIsAuthenticated(false);
   };
 

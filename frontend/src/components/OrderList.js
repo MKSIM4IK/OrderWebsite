@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axiosInstance from '../api/axiosConfig';
 import '../styles/OrderList.css';
 import { useTranslation } from '../i18n';
 
@@ -11,7 +11,7 @@ function OrderList() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/orders');
+      const response = await axiosInstance.get('/api/orders');
       setOrders(response.data);
       setLoading(false);
     } catch (error) {

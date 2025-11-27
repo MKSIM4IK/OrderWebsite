@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axiosInstance from '../api/axiosConfig';
 import '../styles/ClientForm.css';
 import { useTranslation } from '../i18n';
 import { usePageTitle } from '../usePageTitle';
@@ -35,7 +35,7 @@ function ClientForm() {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/orders', formData);
+      await axiosInstance.post('/api/orders', formData);
       toast.success(t('clientForm.success_message'));
       setSubmitted(true);
       setFormData({ client_name: '', phone: '', description: '' });
